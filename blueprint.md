@@ -116,9 +116,9 @@ Responsible for turning a cloud provider's public docs into hashed, chunked, emb
 | `parser.py` | Strip navigation/ads, keep main content, extract canonical URL + title. | `beautifulsoup4` | No PDF/video parsing. |
 | `chunker.py` | Split by semantic headers, preserve `header_path` metadata. | `langchain.text_splitter.HTMLHeaderTextSplitter` | No fixed-token fallback in v1. |
 | `hasher.py` | SHA-256 over `(normalized_text + header_path)`. | `hashlib` | Hash is content-only — URL moves don't invalidate. |
-| `delta.py` | Compare incoming hash to Mongo's stored hash; emit `{new, changed, unchanged, deleted}` sets. | `pymongo` | — |
+| `delta.py` | Compare incoming hash to Mongo's stored hash; emit `{new, changed, unchanged, deleted}` sets. | `services.mongodb` | — |
 | `embedder.py` | Batch-embed via `ModelRouter`; tags vectors with `embedding_model_version`. | `ModelRouter` (§4 core) | Does not retry individual failures past 3 attempts — surfaces to the run log. |
-| `upserter.py` | Transactional-ish upsert: Pinecone first (idempotent), then Mongo, then commit run record. | `pinecone`, `pymongo` | No distributed transaction — see [§6](#6-delta-update-workflow-hash-based-sync) on crash-safety. |
+| `upserter.py` | Transactional-ish upsert: Pinecone first (idempotent), then Mongo, then commit run record. | `services.pinecone`, `services.mongodb` | No distributed transaction — see [§6](#6-delta-update-workflow-hash-based-sync) on crash-safety. |
 | `runner.py` | CLI entrypoint called by the GitHub Actions job. | `click` / `typer` | — |
 
 ### `src/certgen/rag/`
@@ -126,8 +126,16 @@ Responsible for turning a natural-language query into a list of grounded parent 
 
 | Module | Responsibility |
 |---|---|
-| `hybrid_retriever.py` | Parent-Document Retrieval: query Pinecone for top-k chunk IDs, then fetch each chunk's parent `document` from Mongo. Returns parent docs (deduplicated) plus the matching chunk excerpts as citations. |
+| `hybrid_retriever.py` | Parent-Document Retrieval: query Pinecone for top-k chunk IDs, then fetch each chunk's parent `document` from Mongo. Returns parent docs (deduplicated) plus the matching chunk excerpts as citations. Delegates all store I/O to `services.pinecone` and `services.mongodb`. |
 | `reranker.py` *(optional, flagged off in v1)* | Cross-encoder rerank slot; no-op by default. |
+
+### `src/certgen/services/`
+Thin client wrappers that own connection lifecycle and raw driver calls for both stores. All other modules import from here — no direct `pinecone` or `pymongo` driver usage outside this package.
+
+| Module | Responsibility | Key libs |
+|---|---|---|
+| `pinecone.py` | Client init (index name from settings), `upsert(vectors)`, `delete(ids)`, `query(vector, top_k, namespace, filter)`. | `pinecone` |
+| `mongodb.py` | Client init (URI from settings), collection accessors: `upsert_chunk()`, `upsert_document()`, `find_chunk_by_id()`, `tombstone_chunks()`, `insert_ingestion_run()`. | `pymongo` |
 
 ### `src/certgen/agent/`
 The LangGraph graph. See [§7](#7-langgraph-agent-design) for shape.
@@ -255,6 +263,7 @@ This is why the two stores are complementary rather than redundant.
 ```mermaid
 sequenceDiagram
     participant GH as GH Actions (weekly)
+    participant Set as app.core.settings
     participant Run as ingestion.runner
     participant Web as cloud.google.com
     participant Mongo as MongoDB Atlas
@@ -262,6 +271,7 @@ sequenceDiagram
     participant Pine as Pinecone
 
     GH->>Run: cron trigger
+    Run->>Set: load config
     Run->>Web: SitemapLoader.fetch()
     Web-->>Run: HTML pages
     Run->>Run: parse + chunk + hash
@@ -571,6 +581,10 @@ Certif-Exam-Generator/
 │   │   ├── embedder.py
 │   │   ├── upserter.py
 │   │   └── runner.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── pinecone.py             # client init, upsert, delete, query
+│   │   └── mongodb.py                # client init, chunk upsert/find, tombstone, ingestion_runs
 │   ├── rag/
 │   │   └── hybrid_retriever.py
 │   ├── agent/
@@ -596,7 +610,8 @@ Certif-Exam-Generator/
 │   ├── integration/                    # hits a testcontainers Mongo + mocked Pinecone
 │   └── fixtures/
 ├── configs/
-│   └── certs/gcp-pca.yaml
+│   ├── certs/gcp-pca.yaml
+│   └── setting.py
 ├── docker-compose.yml                  # local Mongo for offline dev
 └── Dockerfile                          # API image
 ```

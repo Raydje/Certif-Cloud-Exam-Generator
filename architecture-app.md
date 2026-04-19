@@ -25,6 +25,10 @@ Certif-Exam-Generator/
 │   │   ├── embedder.py
 │   │   ├── upserter.py
 │   │   └── runner.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── pinecone.py             # client init, upsert, delete, query
+│   │   └── mongodb.py                # client init, chunk upsert/find, tombstone, ingestion_runs
 │   ├── rag/
 │   │   └── hybrid_retriever.py
 │   ├── agent/
@@ -50,7 +54,8 @@ Certif-Exam-Generator/
 │   ├── integration/                    # hits a testcontainers Mongo + mocked Pinecone
 │   └── fixtures/
 ├── configs/
-│   └── certs/gcp-pca.yaml
+│   ├── certs/gcp-pca.yaml
+│   └── setting.py
 ├── docker-compose.yml                  # local Mongo for offline dev
 └── Dockerfile                          # API image
 ```
@@ -79,6 +84,7 @@ stateDiagram-v2
 ```mermaid
 sequenceDiagram
     participant GH as GH Actions (weekly)
+    participant Set as app.core.settings
     participant Run as ingestion.runner
     participant Web as cloud.google.com
     participant Mongo as MongoDB Atlas
@@ -86,6 +92,7 @@ sequenceDiagram
     participant Pine as Pinecone
 
     GH->>Run: cron trigger
+    Run->>Set: load config
     Run->>Web: SitemapLoader.fetch()
     Web-->>Run: HTML pages
     Run->>Run: parse + chunk + hash
