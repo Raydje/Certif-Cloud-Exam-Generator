@@ -556,7 +556,7 @@ Certif-Exam-Generator/
 │   │   ├── ci.yml                      # lint + pytest on PR
 │   │   └── weekly-ingest.yml           # §9
 │   └── dependabot.yml
-├── src/certgen/
+├── app
 │   ├── __init__.py
 │   ├── core/
 │   │   ├── settings.py
