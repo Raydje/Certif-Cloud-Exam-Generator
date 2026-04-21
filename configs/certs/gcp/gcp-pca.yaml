@@ -1,0 +1,54 @@
+- cert_id: gcp-pca
+  domain_id: "1"
+  domain_name: "Design and plan a cloud solution architecture"
+  weight_pct: 24
+  topics:
+    - "Designing a solution infrastructure that meets business requirements"
+    - "Designing a solution infrastructure that meets technical requirements"
+    - "Designing network, storage, and compute resources"
+    - "Creating a migration plan (i.e., architectural diagrams and documents)"
+    - "Envisioning future solution improvements"
+
+- cert_id: gcp-pca
+  domain_id: "2"
+  domain_name: "Manage and provision the cloud solution infrastructure"
+  weight_pct: 15
+  topics:
+    - "Configuring network topologies"
+    - "Configuring individual storage systems"
+    - "Configuring compute systems"
+
+- cert_id: gcp-pca
+  domain_id: "3"
+  domain_name: "Design for security and compliance"
+  weight_pct: 18
+  topics:
+    - "Designing for security"
+    - "Designing for compliance"
+
+- cert_id: gcp-pca
+  domain_id: "4"
+  domain_name: "Analyze and optimize technical and business processes"
+  weight_pct: 18
+  topics:
+    - "Analyzing and defining technical processes"
+    - "Analyzing and defining business processes"
+    - "Developing procedures to ensure reliability of solutions in production"
+
+- cert_id: gcp-pca
+  domain_id: "5"
+  domain_name: "Manage implementations of cloud architecture"
+  weight_pct: 11
+  topics:
+    - "Advising development and operations teams to ensure successful deployment of the solution"
+    - "Interacting with Google Cloud programmatically"
+
+- cert_id: gcp-pca
+  domain_id: "6"
+  domain_name: "Ensure solution and operations excellence"
+  weight_pct: 14
+  topics:
+    - "Monitoring and logging"
+    - "Deployment and release management"
+    - "Supporting operational troubleshooting"
+    - "Evaluating quality control measures"
