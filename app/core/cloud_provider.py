@@ -137,7 +137,7 @@ class GCPProvider:
         "https://cloud.google.com/deploy/docs",
     ]
 
-    cert_tags: list[str] = ["gcp", "gcp-pca", "gcp-pmle"]
+    cert_tags: list[str] = ["gcp-pca", "gcp-pmle", "gcp-pcd"]
 
     @property
     def sitemap_urls(self) -> list[str]:
@@ -156,7 +156,8 @@ class GCPProvider:
         """GCP Professional Cloud Architect exam domains.
 
         Weights and domains sourced from the official Google exam guide (2026 revision).
-        https://cloud.google.com/learn/certification/guides/professional-cloud-architect
+        
+        Returns a list of CertBlueprint.
         """
         
         if tag not in self.cert_tags:
