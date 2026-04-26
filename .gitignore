@@ -19,11 +19,20 @@ env/
 # IDEs
 .vscode/
 .idea/
+CLAUDE.md
+AGENTS.md
 
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
+test_app.ipynb
+
+
+# Formating
+.mypy_cache/
+.ruff_cache/
 
 # Project specific
 *.log
+sample_response.json

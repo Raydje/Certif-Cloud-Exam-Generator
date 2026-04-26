@@ -1,0 +1,53 @@
+- cert_id: gcp-pmle
+  domain_id: "1"
+  domain_name: "ML Problem Framing"
+  weight_pct: 15
+  topics:
+    - "Translating business problems into ML use cases"
+    - "Defining success metrics and ML performance metrics"
+    - "Identifying data sources and risks (e.g., bias, privacy)"
+
+- cert_id: gcp-pmle
+  domain_id: "2"
+  domain_name: "ML Solution Architecture"
+  weight_pct: 18
+  topics:
+    - "Designing for scalability, reliability, and cost-effectiveness"
+    - "Choosing the right Google Cloud hardware (CPU vs. GPU vs. TPU)"
+    - "Selecting appropriate ML services (AutoML vs. Vertex AI Custom Training)"
+
+- cert_id: gcp-pmle
+  domain_id: "3"
+  domain_name: "Data Preparation and Processing"
+  weight_pct: 22
+  topics:
+    - "Data exploration and cleaning (EDA)"
+    - "Feature engineering and selection"
+    - "Building scalable data pipelines (Dataflow, BigQuery, Dataproc)"
+
+- cert_id: gcp-pmle
+  domain_id: "4"
+  domain_name: "ML Model Development"
+  weight_pct: 20
+  topics:
+    - "Selecting algorithms and frameworks (TensorFlow, PyTorch, XGBoost)"
+    - "Training and hyperparameter tuning"
+    - "Evaluating and validating model performance"
+
+- cert_id: gcp-pmle
+  domain_id: "5"
+  domain_name: "ML Pipeline Automation and Orchestration"
+  weight_pct: 18
+  topics:
+    - "Designing CI/CD pipelines for ML (MLOps)"
+    - "Orchestrating workflows with Vertex AI Pipelines and Kubeflow"
+    - "Implementing model versioning and metadata tracking"
+
+- cert_id: gcp-pmle
+  domain_id: "6"
+  domain_name: "ML Solution Monitoring, Optimization, and Maintenance"
+  weight_pct: 7
+  topics:
+    - "Monitoring for performance decay and data drift"
+    - "Optimizing serving infrastructure for low latency"
+    - "Managing retraining and continuous deployment"
