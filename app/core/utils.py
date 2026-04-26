@@ -1,7 +1,35 @@
 import logging
 import sys
-
+import os
+import yaml
 import structlog
+
+
+def import_certif_exam_file(tag: str) -> None:
+        """
+        Returns a list of CertBlueprint.
+        """
+                
+        yaml_path = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "configs",
+                "certs",
+                "gcp",
+                f"{tag}.yaml",
+            )
+        )
+
+        with open(yaml_path, "r", encoding="utf-8") as f:
+            try:
+                data = yaml.safe_load(f)
+            except yaml.YAMLError as e:
+                logger.error("Error loading YAML file", file=yaml_path, error=e)
+                raise
+
+        return data
 
 
 def _configure_logging(level: int = logging.INFO) -> None:

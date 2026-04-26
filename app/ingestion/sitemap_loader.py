@@ -37,7 +37,7 @@ class ProviderSitemapLoader:
     def __init__(
         self,
         provider: CloudProvider,
-        max_concurrency: int = 5,
+        max_concurrency: int = 3,
         requests_per_second: int = 2,
     ):
         """
@@ -157,6 +157,46 @@ class ProviderSitemapLoader:
             logger.error("sitemap_fetch_failed", error=str(e))
             raise
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(
+            (requests.exceptions.ConnectionError, requests.exceptions.Timeout)
+        ),
+        reraise=True,
+    )
+    async def get_sub_sitemaps(self, sitemap_index_url: Optional[List[str]] = None) -> List[str]:
+        """
+        Fetches a sitemap index XML and extracts all sub-sitemap URLs.
+
+        Args:
+            sitemap_index_url: The URL of the sitemap index (e.g., [https://cloud.google.com/sitemap.xml]).
+
+        Returns:
+            List of sub-sitemap URLs found in the index.
+        """
+        
+        if not sitemap_index_url:
+            sitemap_url = self.provider.sitemap_urls
+        else:
+            sitemap_url = sitemap_index_url
+        logger.info("fetching_sitemap_index", sitemap_index_url=sitemap_url)
+        
+        sub_sitemaps = []
+        for url in sitemap_url: 
+            response = await asyncio.to_thread(requests.get, url, timeout=15)
+            soup = BeautifulSoup(response.content, "xml")
+
+            sub_sitemaps.extend([loc.text for loc in soup.find_all("loc")])
+
+            logger.info(
+                "sitemap_index_parsed",
+                sitemap_index_url=sitemap_url,
+                sub_sitemap_count=len(sub_sitemaps),
+            )
+
+        return sub_sitemaps
+
     def _build_regex_filters(self) -> Optional[List[str]]:
         """
         Converts the provider's URL roots into regex patterns for the SitemapLoader.
@@ -180,28 +220,40 @@ class ProviderSitemapLoader:
 
         return regex_filters
 
-    async def aload_all(self) -> AsyncGenerator[Document, None]:
+    async def aload_all(
+        self, 
+        max_pages: Optional[int] = None,
+        max_sub_sitemaps: Optional[int] = None
+    ) -> AsyncGenerator[Document, None]:
         """
         Main entry point for asynchronous ingestion.
         Yields parsed documents ready for chunking.
         Sitemap indices are processed concurrently respecting max_concurrency.
         """
+        # Récupération de tous les sub_sitemaps à partier de l'index sitemap du provider
+        list_sub_sitemap = await self.get_sub_sitemaps()
+        
+        if max_sub_sitemaps:
+            list_sub_sitemap = list_sub_sitemap[:max_sub_sitemaps]
+        
         logger.info(
             "starting_provider_ingestion",
             provider=self.provider.__class__.__name__,
-            sitemap_count=len(self.sitemap_urls),
+            sitemap_count=len(list_sub_sitemap),
+            sitemap_index_urls=self.provider.sitemap_urls,
             concurrency=self.max_concurrency,
         )
 
+        
         semaphore = asyncio.Semaphore(self.max_concurrency)
 
         async def _fetch_with_semaphore(sitemap: str) -> List[Document]:
             async with semaphore:
-                return await self._fetch_single_sitemap(sitemap)
+                return await self._fetch_single_sitemap(sitemap, max_pages=max_pages)
 
         # Filter sitemaps and prepare tasks
         tasks = []
-        for sitemap in self.sitemap_urls:
+        for sitemap in list_sub_sitemap:
             if not self.url_filter_func(sitemap):
                 logger.debug("skipping_sitemap_by_filter", sitemap_url=sitemap)
                 continue
@@ -210,6 +262,7 @@ class ProviderSitemapLoader:
         # Stream results as soon as each sitemap task completes
         for coro in asyncio.as_completed(tasks):
             try:
+                # No need to asyncio.sleep because already implement in the loader with self.requests_per_second
                 result = await coro
                 for doc in result:
                     # Ensure metadata integrity required for the hashing phase later

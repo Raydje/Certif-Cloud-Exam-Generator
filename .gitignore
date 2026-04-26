@@ -26,6 +26,8 @@ AGENTS.md
 .pytest_cache/
 .coverage
 htmlcov/
+test_app.ipynb
+
 
 # Formating
 .mypy_cache/
@@ -33,3 +35,4 @@ htmlcov/
 
 # Project specific
 *.log
+sample_response.json

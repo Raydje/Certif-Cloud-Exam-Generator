@@ -8,6 +8,7 @@ import os
 import yaml
 from dataclasses import dataclass, field
 from typing import Callable, Protocol, runtime_checkable
+from app.core.utils import import_certif_exam_file
 
 
 # ---------------------------------------------------------------------------
@@ -163,19 +164,6 @@ class GCPProvider:
         if tag not in self.cert_tags:
             raise ValueError(f"Invalid cert tag '{tag}' for GCPProvider. Valid tags: {self.cert_tags}")
         
-        yaml_path = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "..",
-                "configs",
-                "certs",
-                "gcp",
-                f"{tag}.yaml",
-            )
-        )
-
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
+        data = import_certif_exam_file(tag)
 
         return [CertBlueprint(**item) for item in data]
